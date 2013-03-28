@@ -2,8 +2,8 @@ net = require 'net'
 
 # configurable options
 options =
-  transport: 'websocket' # use xhr-polling if the connection doesn't work
-  webPort: 2280 # HTTP port for the web socket
+  transport: 'xhr-polling' # use xhr-polling if the connection doesn't work
+  webPort: 80 # HTTP port for the web socket
   tcpPort: 4100 # local TCP port for the bridge
 
 io = (require 'socket.io').listen options.webPort,
@@ -41,5 +41,10 @@ io.sockets.on 'connection', (socket) ->
 
     bridge.on 'end', ->
       console.log 'bridge end: ' + thisKey
+      socket.emit 'bridge-disconnect', key: thisKey
+      delete connections[thisKey]
+
+    bridge.on 'error', ->
+      console.log 'bridge error: ' + thisKey
       socket.emit 'bridge-disconnect', key: thisKey
       delete connections[thisKey]
