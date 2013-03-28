@@ -1,20 +1,45 @@
-io = (require 'socket.io').listen 2280
 net = require 'net'
+
+# configurable options
+options =
+  transport: 'websocket' # use xhr-polling if the connection doesn't work
+  webPort: 2280 # HTTP port for the web socket
+  tcpPort: 4100 # local TCP port for the bridge
+
+io = (require 'socket.io').listen options.webPort,
+  transports: [ options.transport ]
+  'log level': 1
 
 io.sockets.on 'connection', (socket) ->
 
-  server = net.createServer (dsClient) ->
-    console.log 'ds client connected'
-    socket.emit 'dsConnect'
+  console.warn 'socket: ' + socket.transport
 
-    socket.on 'data', (data) ->
-      console.log 'socket data: ' + data.length
-      dsClient.write new Buffer data
+  server = net.createServer()
 
-    dsClient.on 'data', (data) ->
-      console.log 'client data: ' + data.length
-      socket.emit 'data', data
-
-  server.listen 4100, ->
+  server.listen options.tcpPort, ->
     console.log 'ds server proxy listening'
 
+  connections = {}
+
+  socket.on 'data', (data) ->
+    bridge = connections[data.key]
+    if bridge
+      bridge.write new Buffer data.buffer
+    else
+      console.log 'invalid key: ' + data.key
+
+  key = 0
+  server.on 'connection', (bridge) ->
+    thisKey = key++
+    connections[thisKey] = bridge
+
+    console.log 'ds client connected: ' + thisKey
+    socket.emit 'bridge-connect', key: thisKey
+
+    bridge.on 'data', (data) ->
+      socket.emit 'data', key: thisKey, buffer: data
+
+    bridge.on 'end', ->
+      console.log 'bridge end: ' + thisKey
+      socket.emit 'bridge-disconnect', key: thisKey
+      delete connections[thisKey]
