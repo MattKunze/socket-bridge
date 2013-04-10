@@ -44,3 +44,6 @@ client.on 'connect', ->
         console.log 'bridge end: ' + thisKey
         delete servers[thisKey]
 
+      server.on 'error', ->
+        console.log 'bridge error: ' + thisKey
+
