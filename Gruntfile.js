@@ -4,6 +4,8 @@ var mountFolder = function (connect, dir) {
   return connect.static(require('path').resolve(dir));
 };
 
+var path = require('path');
+
 module.exports = function (grunt) {
   // load all grunt tasks
   require('matchdep').filterDev('grunt-*').forEach(grunt.loadNpmTasks);
@@ -41,6 +43,20 @@ module.exports = function (grunt) {
           '<%= yeoman.app %>/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}'
         ],
         tasks: ['livereload']
+      }
+    },
+    express: {
+      livereload: {
+        options: {
+          port: 9000,
+          bases: [
+            path.resolve('.tmp'),
+            path.resolve(yeomanConfig.app)
+          ],
+          monitor: {},
+          debug: true,
+          server: path.resolve('./server')
+        }
       }
     },
     connect: {
@@ -266,7 +282,8 @@ module.exports = function (grunt) {
     'coffee:dist',
     'compass:server',
     'livereload-start',
-    'connect:livereload',
+    // 'connect:livereload',
+    'express',
     'watch'
   ]);
 

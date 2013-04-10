@@ -24,7 +24,11 @@
     "grunt-open": "~0.2.0",
     "matchdep": "~0.1.1",
     "grunt-google-cdn": "~0.1.1",
-    "grunt-ngmin": "~0.0.2"
+    "grunt-ngmin": "~0.0.2",
+    "grunt-express": "git://github.com/blai/grunt-express.git",
+    "express": "~3.1.0",
+    "socket.io": "0.9.13",
+    "socket.io-client": "0.9.11"
   },
   "engines": {
     "node": ">=0.8.0"
