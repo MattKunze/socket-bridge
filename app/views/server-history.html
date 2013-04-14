@@ -1,0 +1,8 @@
+<div ng-controller="ServerHistoryCtrl">
+  <h4>Server History</h4>
+  <ul>
+    <li ng-repeat="ev in history">
+      {{ ev.when}} - {{ ev.what }} - {{ ev.severity}}
+    </li>
+  </ul>
+</div>

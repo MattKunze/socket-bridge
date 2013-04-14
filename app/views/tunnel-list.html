@@ -1,0 +1,11 @@
+<div ng-controller="TunnelListCtrl">
+  Active tunnels:
+  <ul ng-show="tunnels.length > 0">
+    <li ng-repeat="tunnel in tunnels">
+      <div ng-include src="'views/tunnel-info.html'"></div>
+    </li>
+  </ul>
+  <div ng-show="tunnels.length == 0">
+    Nothing is connected...
+  </div>
+</div>

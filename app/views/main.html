@@ -1,9 +1,8 @@
 <div class="hero-unit">
-  <h1><i class="icon icon-dashboard"></i> 'Allo, 'Allo!</h1>
-  <p>You now have</p>
-  <ul>
-      <li ng-repeat="thing in awesomeThings">{{thing}}</li>
-  </ul>
-  <p>installed.</p>
-  <h3>Enjoy coding! - Yeoman</h3>
+  <h1><i class="icon icon-dashboard"></i> {{title}}</h1>
+
+  <div ng-include src="'views/tunnel-list.html'"></div>
+
+  <div ng-include src="'views/server-history.html'"></div>
+
 </div>
