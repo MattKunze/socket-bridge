@@ -6,6 +6,8 @@ var io = require('socket.io-client')
 var targetAddress = null
 var agent = new http.Agent({ keepAlive: true })
 
+var pendingRequests = {}
+
 var forwardRequest = (socket, request) => {
   var id = request.id
 
@@ -41,16 +43,27 @@ var forwardRequest = (socket, request) => {
     res.on('end', () => {
       console.warn(`${id} end - ${request.path}`)
       socket.emit('response-end', { id: id })
+      delete pendingRequests[id]
     })
   })
+  pendingRequests[id] = req
   req.on('error', (error) => {
     console.error('error', error)
     socket.emit('response-error', { id: id, error, error })
+    delete pendingRequests[id]
   })
   if(body) {
     req.write(body)
   }
   req.end()
+}
+
+var cancelRequest = (request) => {
+  console.warn(`${request.id} cancel`)
+  var req = pendingRequests[request.id]
+  if(req) {
+    req.abort()
+  }
 }
 
 module.exports = (args) => {
@@ -63,4 +76,5 @@ module.exports = (args) => {
   })
 
   socket.on('request', forwardRequest.bind(null, socket))
+  socket.on('cancel', cancelRequest)
 }
