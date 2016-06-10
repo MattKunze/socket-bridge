@@ -1,5 +1,10 @@
 var _ = require('lodash')
+var path = require('path')
+
 var express = require('express')
+var http = require('http')
+var https = require('spdy')
+var LEX = require('letsencrypt-express')
 var bodyParser = require('body-parser')
 var uuid = require('uuid')
 
@@ -104,20 +109,70 @@ var responseEnd = (socket, response) => {
 }
 
 module.exports = (args) => {
-  var listenPort = args.listenPort || 80
-  var basePort = args.basePort || 5000
+  const basePort = args.basePort || 5000
   nextPort = basePort
 
-  var app = express()
-  var server = require('http').Server(app)
-  var io = require('socket.io')(server)
+  const app = express()
 
   const store = createStore()
   middleware(app, store)
 
-  io.on('connection', handleSocket)
+  const initializeSockets = (server) => {
+    var io = require('socket.io')(server)
+    io.on('connection', handleSocket)
+  }
 
-  server.listen(listenPort, () => {
-    console.log(`Listening on port ${listenPort}`)
-  })
+  if(args.noHttps) {
+    var server = http.Server(app)
+    initializeSockets(server)
+
+    var listenPort = args.listenPort || 3000
+    server.listen(listenPort, (error) => {
+      if(error) {
+        console.error('Failed to start server', error)
+      }
+      else {
+        console.log(`Listening at http://localhost:${listenPort}`)
+      }
+    })
+  }
+  else {
+    const lex = LEX.create({
+      configDir: path.join(require('os').homedir(), 'letsencrypt', 'etc'),
+      approveRegistration: (hostname, approve) => {
+        if(hostname === args.lexDomain) {
+          approve(null, {
+            domains: [ args.lexDomain ],
+            email: args.lexEmail,
+            agreeTos: true
+          })
+        }
+      }
+    })
+
+    const redirectHttp = () => {
+      http.createServer(LEX.createAcmeResponder(lex, (req, res) => {
+        // not using express so helper functions aren't available
+        res.setHeader('Location', `https://${req.headers.host + req.url}`)
+        res.statusCode = 302
+        res.end('Redirecting to https://')
+      })).listen(80)
+    }
+
+    const serveHttps = () => {
+      const server = https.createServer(lex.httpsOptions, LEX.createAcmeResponder(lex, app))
+      initializeSockets(server)
+      server.listen(443, (error) => {
+        if(error) {
+          console.error('Failed to start server', error)
+        }
+        else {
+          console.log(`Listening at https://${args.lexDomain}`)
+        }
+      })
+    }
+
+    redirectHttp()
+    serveHttps()
+  }
 }
