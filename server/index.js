@@ -3,6 +3,9 @@ var express = require('express')
 var bodyParser = require('body-parser')
 var uuid = require('uuid')
 
+import createStore from './createStore'
+var middleware = require('./middleware')
+
 var nextPort = 0
 var pendingResponses = {}
 
@@ -24,7 +27,8 @@ var handleSocket = (socket) => {
 
   var bridge = null
   socket.on('bridge', (options) => {
-    bridge = createBridge(socket, options)
+    var listenPort = nextPort++
+    bridge = createBridge(socket, { listenPort })
   })
   socket.on('response-headers', responseHeaders.bind(null, socket))
   socket.on('response-data', responseData.bind(null, socket))
@@ -32,9 +36,8 @@ var handleSocket = (socket) => {
   socket.on('response-end', responseEnd.bind(null, socket))
 }
 
-var createBridge = (socket, options) => {
-  var listenPort = nextPort++
-  console.warn(`${socketKey(socket)}: create bridge - port ${listenPort}`, options)
+var createBridge = (socket, { listenPort }) => {
+  console.warn(`${socketKey(socket)}: create bridge - port ${listenPort}`)
 
   var app = express()
   app.use(bodyParser.raw({ type: '*/*', limit: '10mb' }))
@@ -109,9 +112,8 @@ module.exports = (args) => {
   var server = require('http').Server(app)
   var io = require('socket.io')(server)
 
-  app.get('/', (req, res) => {
-    res.send('server')
-  })
+  const store = createStore()
+  middleware(app, store)
 
   io.on('connection', handleSocket)
 
