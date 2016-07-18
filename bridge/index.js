@@ -1,5 +1,6 @@
 var _ = require('lodash')
 var http = require('http')
+var readline = require('readline')
 var url = require('url')
 var io = require('socket.io-client')
 
@@ -68,13 +69,45 @@ var cancelRequest = (request) => {
 
 module.exports = (args) => {
   var serverAddress = args.address || 'http://localhost'
-  targetAddress = url.parse(args.target)
-
   var socket = io(serverAddress)
-  socket.emit('bridge', {
-    name: 'test bridge'
-  })
 
-  socket.on('request', forwardRequest.bind(null, socket))
-  socket.on('cancel', cancelRequest)
+  if(args.target) {
+    socket.emit('bridge', {
+      name: 'test bridge'
+    })
+
+    targetAddress = url.parse(args.target)
+    socket.on('request', forwardRequest.bind(null, socket))
+    socket.on('cancel', cancelRequest)
+  }
+  else if(args.send) {
+    let getMessage = null;
+    if(typeof args.send !== 'string') {
+      getMessage = new Promise( (resolve, reject) => {
+        const io = readline.createInterface({
+          input: process.stdin,
+          output: process.stdout
+        })
+        let buffer = []
+        io.write('Enter message to send: ')
+        io.on('line', (line) => {
+          if(line) {
+            buffer.push(line)
+          }
+          else {
+            io.close()
+          }
+        })
+        io.on('close', () => resolve(buffer.join('\n')) )
+      })
+    }
+    else {
+      getMessage = Promise.resolve(args.send)
+    }
+
+    getMessage.then( (message) => {
+      socket.emit('send', message)
+      socket.on('ack', () => socket.close() )
+    })
+  }
 }

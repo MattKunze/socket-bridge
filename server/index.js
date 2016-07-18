@@ -39,6 +39,12 @@ var handleSocket = (socket) => {
   socket.on('response-data', responseData.bind(null, socket))
   socket.on('response-error', responseError.bind(null, socket))
   socket.on('response-end', responseEnd.bind(null, socket))
+
+  socket.on('send', (results) => {
+    console.log(`Received message (${typeof results})`)
+    console.log(results)
+    socket.emit('ack')
+  })
 }
 
 var createBridge = (socket, { listenPort }) => {

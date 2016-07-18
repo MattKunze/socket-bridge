@@ -15,7 +15,6 @@
     "immutable": "^3.8.1",
     "letsencrypt-express": "^1.1.5",
     "lodash": "^4.13.1",
-    "nodemon": "^1.9.2",
     "react": "^15.1.0",
     "react-dom": "^15.1.0",
     "react-redux": "^4.4.5",
@@ -34,7 +33,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "server": "node index.js --server",
-    "bridge": "nodemon index.js --bridge"
+    "bridge": "node index.js --bridge"
   },
   "author": "",
   "license": "ISC"
