@@ -1,11 +1,12 @@
 var _ = require('lodash')
 var http = require('http')
+var https = require('https')
 var readline = require('readline')
 var url = require('url')
 var io = require('socket.io-client')
 
 var targetAddress = null
-var agent = new http.Agent({ keepAlive: true })
+var agent = null
 
 var pendingRequests = {}
 
@@ -28,7 +29,8 @@ var forwardRequest = (socket, request) => {
     method: request.method || 'GET',
     headers: headers,
     path: request.path,
-    agent: agent
+    agent: agent,
+    rejectUnauthorized: false
   }
   var req = http.request(options, (res) => {
     socket.emit('response-headers', {
@@ -77,6 +79,12 @@ module.exports = (args) => {
     })
 
     targetAddress = url.parse(args.target)
+    if (targetAddress.protocol === 'http:') {
+      agent = new http.Agent({ keepAlive: true })
+    }
+    else {
+      agent = new https.Agent({ keepAlive: true })
+    }
     socket.on('request', forwardRequest.bind(null, socket))
     socket.on('cancel', cancelRequest)
   }
