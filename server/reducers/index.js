@@ -1,11 +1,9 @@
 import { combineReducers } from 'redux'
 
-const placeholder = (state = { fake: 'stuff' }, action) => {
-  return state
-}
+import socketReducer from './socketReducer'
 
 export default () => {
   return combineReducers({
-    placeholder
+    sockets: socketReducer
   })
 }

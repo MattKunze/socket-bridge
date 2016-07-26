@@ -1,16 +1,18 @@
-var _ = require('lodash')
 var path = require('path')
 
 var express = require('express')
 var http = require('http')
 var https = require('spdy')
+var socketIo = require('socket.io')
 var LEX = require('letsencrypt-express')
 var bodyParser = require('body-parser')
 var uuid = require('uuid')
 
+import { Actions } from './constants'
 import createStore from './createStore'
 var middleware = require('./middleware')
 
+/*
 var nextPort = 0
 var pendingResponses = {}
 
@@ -51,7 +53,7 @@ var createBridge = (socket, { listenPort }) => {
   console.warn(`${socketKey(socket)}: create bridge - port ${listenPort}`)
 
   var app = express()
-  app.use(bodyParser.raw({ type: '*/*', limit: '10mb' }))
+  app.use(bodyParser.raw({ type: '* /*', limit: '10mb' }))
   app.use(redirectRequest.bind(null, socket))
 
   return app.listen(listenPort)
@@ -113,24 +115,32 @@ var responseEnd = (socket, response) => {
     console.info(`${socketKey(socket)}: redirect ${pending.path} (${pending.status}) - ${pending.received}b in ${Date.now() - pending.start}ms`)
   }
 }
+*/
 
 module.exports = (args) => {
   const basePort = args.basePort || 5000
-  nextPort = basePort
+  // nextPort = basePort
 
   const app = express()
 
   const store = createStore()
   middleware(app, store)
 
+  /*
   const initializeSockets = (server) => {
     var io = require('socket.io')(server)
     io.on('connection', handleSocket)
   }
+  */
 
   if(args.noHttps) {
+    // running into webpack issues requiring socket.io elsewhere in the app,
+    // so dispatching the reference here seems to be the easiest workaround
     var server = http.Server(app)
-    initializeSockets(server)
+    store.dispatch({
+      type: Actions.SERVER_LISTENING,
+      payload: { socketIo, server, basePort }
+    })
 
     var listenPort = args.listenPort || 3000
     server.listen(listenPort, (error) => {
@@ -166,8 +176,12 @@ module.exports = (args) => {
     }
 
     const serveHttps = () => {
-      const server = https.createServer(lex.httpsOptions, LEX.createAcmeResponder(lex, app))
-      initializeSockets(server)
+      const server = https.createServer(lex.httpsOptions,
+        LEX.createAcmeResponder(lex, app))
+      store.dispatch({
+        type: Actions.SERVER_LISTENING,
+        payload: { socketIo, server, basePort }
+      })
       server.listen(443, (error) => {
         if(error) {
           console.error('Failed to start server', error)

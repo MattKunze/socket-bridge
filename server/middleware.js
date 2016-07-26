@@ -8,6 +8,7 @@ import webpack from 'webpack'
 
 import webpackConfig from './webpack.config'
 
+import { uiState } from './selectors'
 import Root from './ui/root'
 
 const layout = (body, initialState) => (`
@@ -28,13 +29,20 @@ const layout = (body, initialState) => (`
 `)
 
 const renderApp = (store, res, req) => {
+  const initialState = uiState(store.getState())
+  console.warn(initialState)
+  const uiStore = {
+    getState: () => initialState,
+    subscribe: () => {}
+  }
   const ui = (
-    <Provider store={store}>
+    <Provider store={uiStore}>
       <Root />
     </Provider>
   )
+  const state = store.getState()
   req.send(
-    layout(renderToString(ui), store.getState())
+    layout(renderToString(ui), initialState)
   )
 }
 
