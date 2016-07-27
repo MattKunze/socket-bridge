@@ -75,7 +75,7 @@ module.exports = (args) => {
 
   if(args.target) {
     socket.emit('bridge', {
-      name: 'test bridge',
+      name: args.name || 'Unnamed bridge',
       target: args.target
     })
 
