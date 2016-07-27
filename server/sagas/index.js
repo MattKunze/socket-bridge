@@ -2,20 +2,24 @@ import { eventChannel, END } from 'redux-saga'
 import { call, fork, put, take } from 'redux-saga/effects'
 
 import { Actions } from '../constants'
+import httpBridge from './httpbridge'
 
 function* rootSaga() {
   yield [
-    fork(webSocketListener)
+    fork(webSocketListener),
+    fork(httpBridge),
   ]
 }
 
+export default rootSaga
+
 function* webSocketListener() {
   const action = yield take(Actions.SERVER_LISTENING)
-  const { socketIo, server } = action.payload
+  const { express, bodyParser, socketIo, server } = action.payload
   const chan = yield call(ioChannel, socketIo(server))
   while(true) {
     let socket = yield take(chan)
-    yield(fork(socketHandler, socket))
+    yield(fork(socketHandler, socket, { express, bodyParser }))
   }
 }
 
@@ -28,14 +32,14 @@ function ioChannel(io) {
   })
 }
 
-function* socketHandler(socket) {
+function* socketHandler(socket, dependencies) {
   yield put({
     type: Actions.SOCKET_CONNECTED,
     payload: socket
   })
 
   try {
-    const chan = yield call(socketChannel, socket)
+    const chan = yield call(socketChannel, socket, dependencies)
     while(true) {
       let action = yield take(chan)
       yield put(action)
@@ -46,7 +50,7 @@ function* socketHandler(socket) {
   }
 }
 
-function socketChannel(socket) {
+function socketChannel(socket, { express, bodyParser }) {
   return eventChannel(emitter => {
     socket.on('disconnect', () => {
       emitter({
@@ -57,8 +61,10 @@ function socketChannel(socket) {
     })
     socket.on('bridge', details => {
       emitter({
-        type: Actions.HTTP_BRIDGE,
+        type: Actions.HTTP_BRIDGE_CREATED,
         payload: Object.assign({
+          express,
+          bodyParser,
           socketId: socket.id
         }, details)
       })
@@ -68,5 +74,3 @@ function socketChannel(socket) {
     return () => {}
   })
 }
-
-export default rootSaga

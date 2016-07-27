@@ -1,12 +1,11 @@
 var path = require('path')
 
 var express = require('express')
+var bodyParser = require('body-parser')
 var http = require('http')
 var https = require('spdy')
 var socketIo = require('socket.io')
 var LEX = require('letsencrypt-express')
-var bodyParser = require('body-parser')
-var uuid = require('uuid')
 
 import { Actions } from './constants'
 import createStore from './createStore'
@@ -134,12 +133,13 @@ module.exports = (args) => {
   */
 
   if(args.noHttps) {
-    // running into webpack issues requiring socket.io elsewhere in the app,
-    // so dispatching the reference here seems to be the easiest workaround
+    // running into webpack issues requiring socket.io, express, etc elsewhere
+    // in the app, so dispatching the reference here seems to be the easiest
+    // workaround
     var server = http.Server(app)
     store.dispatch({
       type: Actions.SERVER_LISTENING,
-      payload: { socketIo, server, basePort }
+      payload: { express, bodyParser, socketIo, server, basePort }
     })
 
     var listenPort = args.listenPort || 3000

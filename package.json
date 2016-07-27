@@ -30,7 +30,9 @@
     "webpack-livereload-plugin": "^0.8.1",
     "webpack-reload-plugin": "^0.1.2"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "nodemon": "^1.10.0"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "server": "node index.js --server",

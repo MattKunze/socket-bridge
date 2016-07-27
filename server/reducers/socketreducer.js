@@ -6,8 +6,14 @@ const reducer = (state = {}, action) => {
     case Actions.SOCKET_CONNECTED:
       {
         const socket = action.payload
-        return Object.assign({}, state,
-          { [socket.id]: socket })
+        return Object.assign({}, state, {
+          [socket.id]: {
+            remoteAddress: socket.conn.remoteAddress,
+            transport: socket.conn.transport.constructor.name,
+            connected: new Date(socket.handshake.issued).toISOString(),
+            _socket: socket,
+          }
+        })
       }
     case Actions.SOCKET_DISCONNECTED:
       {

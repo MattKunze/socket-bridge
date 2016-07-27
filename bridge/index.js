@@ -75,7 +75,8 @@ module.exports = (args) => {
 
   if(args.target) {
     socket.emit('bridge', {
-      name: 'test bridge'
+      name: 'test bridge',
+      target: args.target
     })
 
     targetAddress = url.parse(args.target)

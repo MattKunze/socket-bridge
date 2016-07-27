@@ -28,12 +28,13 @@ const layout = (body, initialState) => (`
   </html>
 `)
 
+const noop = () => {}
 const renderApp = (store, res, req) => {
   const initialState = uiState(store.getState())
-  console.warn(initialState)
   const uiStore = {
     getState: () => initialState,
-    subscribe: () => {}
+    subscribe: noop,
+    dispatch: noop,
   }
   const ui = (
     <Provider store={uiStore}>
