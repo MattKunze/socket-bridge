@@ -67,7 +67,7 @@ module.exports = (args) => {
         LEX.createAcmeResponder(lex, app))
       store.dispatch({
         type: Actions.SERVER_LISTENING,
-        payload: { socketIo, server, basePort }
+        payload: { express, bodyParser, socketIo, server, basePort }
       })
       server.listen(443, (error) => {
         if(error) {
