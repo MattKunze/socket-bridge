@@ -1,4 +1,4 @@
-import { forEach, isEmpty, isObject, reduce } from 'lodash'
+import { forEach, isArray, isEmpty, isObject, reduce } from 'lodash'
 
 export function socketSelector(state, id) {
   if (state.sockets[id]) {
@@ -26,10 +26,10 @@ export function nextBridgePortSelector(state) {
 
 // probably a smarter way to do this, but this strips internal keys (leading
 // underscore) which store server-side values that shouldn't be serialized
-export function uiState(state) {
+export function uiState(state, { blacklist } = {}) {
   return reduce(state, (memo, value, key) => {
-    if (key[0] !== '_') {
-      if (isObject(value)) {
+    if (key[0] !== '_' && (!blacklist || !blacklist.includes(key))) {
+      if (isObject(value) && !isArray(value)) {
         memo[key] = uiState(value)
       }
       else {

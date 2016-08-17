@@ -69,6 +69,18 @@ function socketChannel(socket, { express, bodyParser }) {
         }, details)
       })
     })
+    socket.on('send', message => {
+      emitter({
+        type: Actions.HTTP_MESSAGE,
+        payload: {
+          message,
+          timestamp: Date.now(),
+          remoteAddress: socket.conn.remoteAddress,
+          socketId: socket.id
+        }
+      })
+      socket.emit('ack')
+    })
 
     // have to return an unsubscribe function, but not really anything to do
     return () => {}

@@ -38,13 +38,23 @@ export default function (state = {}, action) {
     case Actions.HTTP_BRIDGE_RESPONSE_ERROR:
       id = action.payload.id
       current = state[id]
-      return Object.assign({}, state, {
-        [id]: Object.assign({}, current, {
-          statusCode: 500,
-          error: action.payload.error,
-          elapsed: Date.now() - current.start
+      if(current) {
+        return Object.assign({}, state, {
+          [id]: Object.assign({}, current, {
+            statusCode: 500,
+            error: action.payload.error,
+            elapsed: Date.now() - current.start
+          })
         })
-      })
+      }
+      else {
+        return Object.assign({}, state, {
+          [id]: {
+            statusCode: 500,
+            error: action.payload.error
+          }
+        })
+      }
     case Actions.HTTP_BRIDGE_RESPONSE_END:
       id = action.payload.id
       current = state[id]

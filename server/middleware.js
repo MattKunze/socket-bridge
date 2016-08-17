@@ -30,7 +30,9 @@ const layout = (body, initialState) => (`
 
 const noop = () => {}
 const renderApp = (store, res, req) => {
-  const initialState = uiState(store.getState())
+  const initialState = uiState(store.getState(), {
+    blacklist: [ 'requests' ]
+  })
   const uiStore = {
     getState: () => initialState,
     subscribe: noop,

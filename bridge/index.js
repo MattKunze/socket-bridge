@@ -104,11 +104,13 @@ module.exports = (args) => {
     if(typeof args.send !== 'string') {
       getMessage = new Promise( (resolve, reject) => {
         const io = readline.createInterface({
-          input: process.stdin,
-          output: process.stdout
+          // seems to be ignoring the prompt value
+          prompt: 'Enter message to send: ',
+          input: process.stdin
         })
+        // explicitly write here since prompt doesn't work
+        process.stdout.write('Enter message to send:\n')
         let buffer = []
-        io.write('Enter message to send: ')
         io.on('line', (line) => {
           if(line) {
             buffer.push(line)
