@@ -8,7 +8,11 @@ import { eventChannel, takeEvery } from 'redux-saga'
 import { call, put, select, take } from 'redux-saga/effects'
 
 import { Actions } from '../constants'
-import { responseSelector, socketSelector } from '../selectors'
+import {
+  nextBridgePortSelector,
+  responseSelector,
+  socketSelector
+} from '../selectors'
 
 function* listen() {
   yield takeEvery(Actions.HTTP_BRIDGE_CREATED, function* (action) {
@@ -19,7 +23,8 @@ export default listen
 
 function* createBridge({ express, bodyParser, socketId, name }) {
   const socket = yield select(socketSelector, socketId)
-  const { nextPort } = yield select(state => state.details)
+  const nextPort = yield select(nextBridgePortSelector)
+  console.warn(`bridge ${name} - ${nextPort}`)
 
   var app = express()
   app.use(bodyParser.raw({ type: '*/*', limit: '10mb' }))

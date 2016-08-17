@@ -70,8 +70,8 @@ var cancelRequest = (request) => {
 }
 
 module.exports = (args) => {
-  var serverAddress = args.address || 'http://localhost'
-  var socket = io(serverAddress)
+  var remoteAddress = args.remote || 'http://localhost:3000'
+  var socket = io(remoteAddress)
 
   if(args.target) {
     socket.emit('bridge', {
@@ -88,6 +88,16 @@ module.exports = (args) => {
     }
     socket.on('request', forwardRequest.bind(null, socket))
     socket.on('cancel', cancelRequest)
+    socket.on('disconnect', () => {
+      console.warn('Disconnected...')
+    })
+    socket.on('reconnect', () => {
+      console.warn('Reconnected')
+      socket.emit('bridge', {
+        name: args.name || 'Unnamed bridge',
+        target: args.target
+      })
+    })
   }
   else if(args.send) {
     let getMessage = null;

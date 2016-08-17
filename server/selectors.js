@@ -1,4 +1,4 @@
-import { isObject, reduce } from 'lodash'
+import { forEach, isEmpty, isObject, reduce } from 'lodash'
 
 export function socketSelector(state, id) {
   if (state.sockets[id]) {
@@ -10,6 +10,18 @@ export function responseSelector(state, id) {
   if (state.requests[id]) {
     return state.requests[id]._res
   }
+}
+
+export function nextBridgePortSelector(state) {
+  let nextPort = state.details.basePort
+  if (!isEmpty(state.bridges)) {
+    forEach(state.bridges, (info) => {
+      if (info.listenPort >= nextPort) {
+        nextPort = info.listenPort + 1
+      }
+    })
+  }
+  return nextPort
 }
 
 // probably a smarter way to do this, but this strips internal keys (leading
