@@ -15,15 +15,17 @@ import {
 } from '../selectors'
 
 function* listen() {
-  yield takeEvery(Actions.HTTP_BRIDGE_CREATED, function* (action) {
+  yield takeEvery(Actions.HTTP_BRIDGE_CREATED, function*(action) {
     yield call(createBridge, action.payload)
   })
 }
 export default listen
 
+let _nextPort = 5000
+
 function* createBridge({ express, bodyParser, socketId, name }) {
   const socket = yield select(socketSelector, socketId)
-  const nextPort = yield select(nextBridgePortSelector)
+  const nextPort = _nextPort++ // yield select(nextBridgePortSelector)
   console.warn(`bridge ${name} - ${nextPort}`)
 
   var app = express()
@@ -36,46 +38,45 @@ function* createBridge({ express, bodyParser, socketId, name }) {
 
   try {
     const chan = yield call(socketChannel, name, socket, app)
-    while(true) {
+    while (true) {
       let action = yield take(chan)
       yield put(action)
       let requestId = action.payload.id
       let res = yield select(responseSelector, requestId)
-      switch(action.type) {
+      switch (action.type) {
         case Actions.HTTP_BRIDGE_REQUEST:
           socket.emit('request', omit(action.payload, 'bridgeName', 'res'))
           break
         case Actions.HTTP_BRIDGE_REQUEST_CANCEL:
-          if(res) {
+          if (res) {
             socket.emit('cancel', { id: action.payload.id })
           }
           break
         case Actions.HTTP_BRIDGE_RESPONSE_HEADERS:
-          if(res) {
+          if (res) {
             res.status(action.payload.statusCode)
             res.set(action.payload.headers)
           }
           break
         case Actions.HTTP_BRIDGE_RESPONSE_DATA:
-          if(res) {
+          if (res) {
             res.write(action.payload.chunk)
           }
           break
         case Actions.HTTP_BRIDGE_RESPONSE_ERROR:
-          if(res) {
+          if (res) {
             res.status(500).send(action.payload.error)
             res.end()
           }
           break
         case Actions.HTTP_BRIDGE_RESPONSE_END:
-          if(res) {
+          if (res) {
             res.end()
           }
           break
       }
     }
-  }
-  finally {
+  } finally {
     console.log(`${socket.id} finally`)
   }
 }
@@ -83,7 +84,7 @@ function* createBridge({ express, bodyParser, socketId, name }) {
 function socketChannel(bridgeName, socket, app) {
   return eventChannel(emitter => {
     // add middleware to forward requests over the socket
-    app.use( (req, res) => {
+    app.use((req, res) => {
       const id = uuid.v4()
       emitter({
         type: Actions.HTTP_BRIDGE_REQUEST,
@@ -93,7 +94,7 @@ function socketChannel(bridgeName, socket, app) {
           res,
           method: req.method,
           headers: pickBy(req.headers, (value, key) => {
-            return (key === 'cookie') || key.startsWith('x-')
+            return key === 'cookie' || key.startsWith('x-')
           }),
           path: req.originalUrl,
           body: req.body
@@ -111,9 +112,18 @@ function socketChannel(bridgeName, socket, app) {
     const emit = (type, payload) => {
       emitter({ type, payload })
     }
-    socket.on('response-headers', emit.bind(null, Actions.HTTP_BRIDGE_RESPONSE_HEADERS))
-    socket.on('response-data', emit.bind(null, Actions.HTTP_BRIDGE_RESPONSE_DATA))
-    socket.on('response-error', emit.bind(null, Actions.HTTP_BRIDGE_RESPONSE_ERROR))
+    socket.on(
+      'response-headers',
+      emit.bind(null, Actions.HTTP_BRIDGE_RESPONSE_HEADERS)
+    )
+    socket.on(
+      'response-data',
+      emit.bind(null, Actions.HTTP_BRIDGE_RESPONSE_DATA)
+    )
+    socket.on(
+      'response-error',
+      emit.bind(null, Actions.HTTP_BRIDGE_RESPONSE_ERROR)
+    )
     socket.on('response-end', emit.bind(null, Actions.HTTP_BRIDGE_RESPONSE_END))
   })
 }
