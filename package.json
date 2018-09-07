@@ -41,5 +41,9 @@
     "bridge-daemon": "nodemon index.js --bridge"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "prettier": {
+    "semi": false,
+    "singleQuote": true
+  }
 }
